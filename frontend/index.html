@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voting ICP Ninja</title>
+  <script src="https://unpkg.com/@dfinity/agent@0.14.0/dist/agent.min.js"></script>
+</head>
+<body>
+  <h2>Voting Sederhana</h2>
+  <form id="voteForm">
+    <label>
+      <input type="radio" name="option" value="Kucing" required> Kucing
+    </label><br>
+    <label>
+      <input type="radio" name="option" value="Anjing"> Anjing
+    </label><br>
+    <label>
+      <input type="radio" name="option" value="Burung"> Burung
+    </label><br>
+    <button type="submit">Vote</button>
+  </form>
+
+  <h3>Hasil Voting</h3>
+  <ul id="results"></ul>
+
+  <script>
+    // Ganti dengan canister ID Anda
+    const canisterId = "YOUR_CANISTER_ID_HERE";
+
+    // Inisialisasi agent
+    const agent = new window.ic.Agent({ host: "https://icp0.io/" });
+    const actor = window.ic.Actor.createActor({
+      IDL: window.ic.IDL,
+      canisterId: canisterId,
+      agent: agent,
+      service: {
+        vote: [window.ic.IDL.Text, window.ic.IDL.Func([], [window.ic.IDL.Text], [])],
+        getResults: [window.ic.IDL.Func([], [window.ic.IDL.Vec(window.ic.IDL.Tuple(window.ic.IDL.Text, window.ic.IDL.Nat))], ['query'])]
+      }
+    });
+
+    // Fungsi untuk submit vote
+    document.getElementById('voteForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const option = document.querySelector('input[name="option"]:checked').value;
+      const result = await actor.vote(option);
+      alert(result);
+      loadResults();
+    };
+
+    // Fungsi untuk load hasil voting
+    async function loadResults() {
+      const results = await actor.getResults();
+      const ul = document.getElementById('results');
+      ul.innerHTML = '';
+      results.forEach(([option, count]) => {
+        const li = document.createElement('li');
+        li.textContent = `${option}: ${count}`;
+        ul.appendChild(li);
+      });
+    }
+
+    // Load hasil voting saat halaman dibuka
+    loadResults();
+  </script>
+</body>
+</html>
